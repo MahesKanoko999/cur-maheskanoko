@@ -1,0 +1,38 @@
+[
+    {
+        "id": "1",
+        "pelanggan_id": "1",
+        "tanggal": "2024-06-01",
+        "menu_id": "1",
+        "jumlah": "2",
+        "total_harga": "50000.00",
+        "handle_karyawan": "1"
+    },
+    {
+        "id": "2",
+        "pelanggan_id": "2",
+        "tanggal": "2024-06-02",
+        "menu_id": "2",
+        "jumlah": "1",
+        "total_harga": "20000.00",
+        "handle_karyawan": "2"
+    },
+    {
+        "id": "3",
+        "pelanggan_id": "3",
+        "tanggal": "2024-06-03",
+        "menu_id": "3",
+        "jumlah": "3",
+        "total_harga": "15000.00",
+        "handle_karyawan": "1"
+    },
+    {
+        "id": "4",
+        "pelanggan_id": "4",
+        "tanggal": "2024-06-04",
+        "menu_id": "4",
+        "jumlah": "1",
+        "total_harga": "30000.00",
+        "handle_karyawan": "3"
+    }
+]
