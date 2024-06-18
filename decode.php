@@ -5,13 +5,8 @@ $user_name  = "root";
 $password   = "";
 $database   = "restaurandb_uas_decode";
 
-// Establish a connection to the database
-$con = new mysqli($host_name, $user_name, $password, $database, $port);
-
-// Check connection
-if ($con->connect_error) {
-    die("Connection failed: " . $con->connect_error);
-}
+$con = mysqli_connect($host_name . ":" . $port, $user_name, $password);
+$sdb = mysqli_select_db($con, $database);
 ?>
 
 <h2><b>Request</b></h2>
@@ -26,7 +21,7 @@ function http_request($url)
 {
     $ch = curl_init(); 
     curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');
+    curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
     $output = curl_exec($ch); 
     curl_close($ch);      
@@ -34,37 +29,33 @@ function http_request($url)
 }
 
 $api_profile = http_request("https://raw.githubusercontent.com/MahesKanoko999/curl-maheskanoko/main/api/encode_mk.json"); 
+
 $profile = json_decode($api_profile, TRUE);
 
-foreach ($profile as $data) {
-    $id = $data['id'];
-    $pelanggan_id = $data['pelanggan_id'];
-    $tanggal = $data['tanggal'];
-    $menu_id = $data['menu_id'];
-    $jumlah = $data['jumlah'];
-    $total_harga = $data['total_harga'];
-    $handle_karyawan = $data['handle_karyawan'];
+$id     = array_column($profile, 'id');
+$pelanggan_id    = array_column($profile, 'pelanggan_id');
+$tanggal   = array_column($profile, 'tanggal');
+$menu_id  = array_column($profile, 'menu_id');
+$jumlah  = array_column($profile, 'jumlah');
+$total_harga  = array_column($profile, 'total_harga');
+$handle_karyawan  = array_column($profile, 'handle_karyawan');
+$last   = count($id);
 
-    $stmt = $con->prepare("SELECT * FROM tb_detail_pesanan WHERE id = ?");
-    $stmt->bind_param("s", $id);
-    $stmt->execute();
-    $stmt->store_result();
-    $dt = $stmt->num_rows;
-    $stmt->close();
+for ($x = 0; $x < $last; $x++) 
+{
+    $list   = mysqli_query($con, "SELECT * FROM tb_detail_pesanan WHERE id = '$id[$x]'");
+    $dt     = mysqli_num_rows($list);
 
-    if ($dt == 0) {
-        $stmt = $con->prepare("INSERT INTO tb_detail_pesanan (id, pelanggan_id, tanggal, menu_id, jumlah, total_harga, handle_karyawan) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssssss", $id, $pelanggan_id, $tanggal, $menu_id, $jumlah, $total_harga, $handle_karyawan);
-        $stmt->execute();
-        $stmt->close();
-        echo "$id $pelanggan_id $tanggal $menu_id $jumlah $total_harga $handle_karyawan<br>";
-    } else {
-        $stmt = $con->prepare("UPDATE tb_detail_pesanan SET pelanggan_id=?, tanggal=?, menu_id=?, jumlah=?, total_harga=?, handle_karyawan=? WHERE id=?");
-        $stmt->bind_param("sssssss", $pelanggan_id, $tanggal, $menu_id, $jumlah, $total_harga, $handle_karyawan, $id);
-        $stmt->execute();
-        $stmt->close();
+    if ($dt == 0)
+    {
+        $result = mysqli_query($con, "INSERT INTO tb_detail_pesanan (id, pelanggan_id, tanggal, menu_id, jumlah, total_harga, handle_karyawan) VALUES ('$id[$x]', '$pelanggan_id[$x]', '$tanggal[$x]', '$menu_id[$x]', '$jumlah[$x]', '$total_harga[$x]',$handle_karyawan[$x]) ");
+        echo $id[$x] . " " . $pelanggan_id[$x] . " " .$tanggal[$x]. " " .$menu_id[$x]. " " .$jumlah[$x]. " " .$total_harga[$x]. " " .$handle_karyawan[$x]. "<br>";
+    }
+    else
+    {
+        $result = mysqli_query($con, "UPDATE tb_detail_pesanan SET id='$id[$x]', pelanggan_id='$pelanggan_id[$x]', tanggal='$tanggal[$x]', menu_id='$menu_id[$x]', jumlah='$jumlah[$x]', total_harga='$total_harga[$x]', handle_karyawan='$handle_karyawan[$x]' WHERE id='$id[$x]'");
     }
 }
 
-$con->close();
+mysqli_close($con);
 ?>
