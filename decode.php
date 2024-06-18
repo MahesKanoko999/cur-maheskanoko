@@ -3,10 +3,16 @@ $host_name  = "localhost";
 $port       = "3306"; 
 $user_name  = "root";
 $password   = "";
-$database   = "restaurantdb_uas";
+$database   = "restaurandb_uas_decode";
 
-$con = mysqli_connect($host_name . ":" . $port, $user_name, $password);
-$sdb = mysqli_select_db($con, $database);
+// Establish a connection to the database
+$con = new mysqli($host_name, $user_name, $password, $database, $port);
+
+// Check connection
+if ($con->connect_error) {
+    die("Connection failed: " . $con->connect_error);
+}
+
 ?>
 
 <h2><b>Request</b></h2>
@@ -28,31 +34,47 @@ function http_request($url)
     return $output;
 }
 
-$profile = http_request("https://raw.githubusercontent.com/rahayuda/cURL/main/mahasiswa.json"); 
+$api_profile = http_request("https://raw.githubusercontent.com/MahesKanoko999/curl-maheskanoko/main/api/encode_mk.json"); 
 
-$profile = json_decode($profile, TRUE);
+$profile = json_decode($api_profile, TRUE);
 
 $id     = array_column($profile, 'id');
-$nim    = array_column($profile, 'nim');
-$nama   = array_column($profile, 'nama');
-$email  = array_column($profile, 'alamat');
+$pelanggan_id    = array_column($profile, 'pelanggan_id');
+$tanggal   = array_column($profile, 'tanggal');
+$menu_id  = array_column($profile, 'menu_id');
+$jumlah  = array_column($profile, 'jumlah');
+$total_harga  = array_column($profile, 'total_harga');
+$handle_karyawan  = array_column($profile, 'handle_karyawan');
 $last   = count($id);
 
 for ($x = 0; $x < $last; $x++) 
 {
-    $list   = mysqli_query($con,"SELECT * FROM mahasiswa WHERE nim = '$nim[$x]'");
-    $dt     = mysqli_num_rows($list);
+    // Use prepared statements to prevent SQL injection
+    $stmt = $con->prepare("SELECT * FROM tb_detail_pesanan WHERE id = ?");
+    $stmt->bind_param("s", $id[$x]);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $dt = $result->num_rows;
+    $stmt->close();
 
     if ($dt == 0)
     {
-        $result = mysqli_query($con, "INSERT INTO mahasiswa (nim, nama, alamat) VALUES ('$nim[$x]', '$nama[$x]', '$email[$x]')");
-        echo $nim[$x] . " " . $nama[$x] . " " .$email[$x]."<br>";
+        $stmt = $con->prepare("INSERT INTO tb_detail_pesanan (id, pelanggan_id, tanggal, menu_id, jumlah, total_harga, handle_karyawan) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssssss", $id[$x], $pelanggan_id[$x], $tanggal[$x], $menu_id[$x], $jumlah[$x], $total_harga[$x], $handle_karyawan[$x]);
+        $stmt->execute();
+        $stmt->close();
+        
+        echo $id[$x] . " " . $pelanggan_id[$x] . " " .$tanggal[$x]. " " .$menu_id[$x]. " " .$jumlah[$x]. " " .$total_harga[$x]. " " .$handle_karyawan[$x] . "<br>";
     }
     else
     {
-        $result = mysqli_query($con, "UPDATE mahasiswa SET nama='$nama[$x]', alamat='$email[$x]' WHERE nim='$nim[$x]'");
+        // Update query using prepared statements
+        $stmt = $con->prepare("UPDATE tb_detail_pesanan SET pelanggan_id=?, tanggal=?, menu_id=?, jumlah=?, total_harga=?, handle_karyawan=? WHERE id=?");
+        $stmt->bind_param("sssssss", $pelanggan_id[$x], $tanggal[$x], $menu_id[$x], $jumlah[$x], $total_harga[$x], $handle_karyawan[$x], $id[$x]);
+        $stmt->execute();
+        $stmt->close();
     }
 }
 
-mysqli_close($con);
+$con->close();
 ?>
